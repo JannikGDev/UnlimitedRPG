@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnlimitedRPG.Api", "UnlimitedRPG.Api\UnlimitedRPG.Api.csproj", "{B8FC68F5-5E5D-4F64-8F7B-0BED3B7B4E95}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnlimitedRPG.Core", "UnlimitedRPG.Core\UnlimitedRPG.Core.csproj", "{EEF6AB34-5E8F-4AB6-92B7-98CF1D221861}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnlimitedRPG.Stubs", "UnlimitedRPG.Stubs\UnlimitedRPG.Stubs.csproj", "{5FA0C4EF-B6FF-4232-8305-AD2A6827E3D0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnlimitedRPG.Tests", "UnlimitedRPG.Tests\UnlimitedRPG.Tests.csproj", "{45D6071D-EDB0-498A-AF91-EF2CE61B547B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{2BBACB86-65DA-45C7-B12E-B4A587712730}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B8FC68F5-5E5D-4F64-8F7B-0BED3B7B4E95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8FC68F5-5E5D-4F64-8F7B-0BED3B7B4E95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8FC68F5-5E5D-4F64-8F7B-0BED3B7B4E95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8FC68F5-5E5D-4F64-8F7B-0BED3B7B4E95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EEF6AB34-5E8F-4AB6-92B7-98CF1D221861}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EEF6AB34-5E8F-4AB6-92B7-98CF1D221861}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EEF6AB34-5E8F-4AB6-92B7-98CF1D221861}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEF6AB34-5E8F-4AB6-92B7-98CF1D221861}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FA0C4EF-B6FF-4232-8305-AD2A6827E3D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FA0C4EF-B6FF-4232-8305-AD2A6827E3D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FA0C4EF-B6FF-4232-8305-AD2A6827E3D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FA0C4EF-B6FF-4232-8305-AD2A6827E3D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45D6071D-EDB0-498A-AF91-EF2CE61B547B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45D6071D-EDB0-498A-AF91-EF2CE61B547B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45D6071D-EDB0-498A-AF91-EF2CE61B547B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45D6071D-EDB0-498A-AF91-EF2CE61B547B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\RpgFramework.Core\RpgFramework.Core.csproj" />
+    <ProjectReference Include="..\UnlimitedRPG.Core\UnlimitedRPG.Core.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>RpgFramework.Stubs</RootNamespace>
   </PropertyGroup>
 
 </Project>

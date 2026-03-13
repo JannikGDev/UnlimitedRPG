@@ -7,6 +7,7 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <RootNamespace>RpgFramework.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,8 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RpgFramework.Core\RpgFramework.Core.csproj" />
-    <ProjectReference Include="..\RpgFramework.Stubs\RpgFramework.Stubs.csproj" />
+    <ProjectReference Include="..\UnlimitedRPG.Core\UnlimitedRPG.Core.csproj" />
+    <ProjectReference Include="..\UnlimitedRPG.Stubs\UnlimitedRPG.Stubs.csproj" />
   </ItemGroup>
 
 </Project>
