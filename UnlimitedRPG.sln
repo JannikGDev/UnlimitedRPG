@@ -14,6 +14,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{2BBACB86-65DA-45C7-B12E-B4A587712730}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
+		UnlimitedRPG_Planning.md = UnlimitedRPG_Planning.md
 	EndProjectSection
 EndProject
 Global
