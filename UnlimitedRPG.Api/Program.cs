@@ -1,8 +1,15 @@
+using Microsoft.EntityFrameworkCore;
+using UnlimitedRPG.Database;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDbContextFactory<RPGContext>(
+    options => options
+        .UseInMemoryDatabase("MemoryDatabase")
+);
 
 var app = builder.Build();
 

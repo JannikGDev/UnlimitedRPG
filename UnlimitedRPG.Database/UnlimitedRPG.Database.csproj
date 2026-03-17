@@ -11,4 +11,8 @@
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.14" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\UnlimitedRPG.Core\UnlimitedRPG.Core.csproj" />
+    </ItemGroup>
+
 </Project>

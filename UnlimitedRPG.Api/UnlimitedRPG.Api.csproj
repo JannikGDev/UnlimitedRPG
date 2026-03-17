@@ -9,12 +9,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.14" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.14" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\UnlimitedRPG.Core\UnlimitedRPG.Core.csproj" />
+    <ProjectReference Include="..\UnlimitedRPG.Database\UnlimitedRPG.Database.csproj" />
     <ProjectReference Include="..\UnlimitedRPG.Stubs\UnlimitedRPG.Stubs.csproj" />
   </ItemGroup>
 
