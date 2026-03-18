@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{2BBACB86-6
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		UnlimitedRPG_Planning.md = UnlimitedRPG_Planning.md
+		CLAUDE.md = CLAUDE.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnlimitedRPG.Database", "UnlimitedRPG.Database\UnlimitedRPG.Database.csproj", "{B7EAA2EF-BB85-4F2D-A254-65C57E0F57AC}"
