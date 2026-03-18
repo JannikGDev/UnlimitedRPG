@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
 
 namespace RpgFramework.Api.Controllers;
@@ -8,19 +9,32 @@ namespace RpgFramework.Api.Controllers;
 [Produces("application/json")]
 public class SessionsController : ControllerBase
 {
-    static readonly Guid _sessionId = Guid.Parse("00000000-0000-0000-0000-000000000010");
+    static readonly ConcurrentDictionary<Guid, SessionStateDto> _sessions = new();
 
-    static readonly SessionStateDto _sessionState = new(
-        SessionId:  _sessionId,
-        Status:     "Active",
-        Round:      2,
-        Player:     new("Thorin", CurrentHp: 18, MaxHp: 20, AttackBonus: 3, DamageBonus: 2, ArmorClass: 15),
-        Enemy:      new("Goblin Scout", CurrentHp: 5, MaxHp: 8, AttackBonus: 1, DamageBonus: 0, ArmorClass: 12, Status: "Staggered"),
-        CombatLog:
-        [
-            new(Round: 1, Hit: true, Damage: 3, Narration: "Thorin swings his axe and lands a solid blow on the goblin's shoulder.", Provider: "stub"),
-        ]
-    );
+    // Enemy pool keyed by world ID
+    static readonly Dictionary<Guid, (string Name, int Hp, int Atk, int Dmg, int Ac)> _worldEnemies = new()
+    {
+        [Guid.Parse("00000000-0000-0000-0000-000000000001")] = ("Shadow Wraith",  10, 2, 1, 13),
+        [Guid.Parse("00000000-0000-0000-0000-000000000002")] = ("Drowned Knight", 14, 3, 2, 15),
+    };
+
+    static readonly string[] _hitNarrations =
+    [
+        "You press forward and your blade finds its mark — the enemy recoils.",
+        "A feint left, then a decisive strike. The blow lands clean.",
+        "The attack connects with a satisfying crack. The enemy staggers.",
+        "You exploit a gap in the enemy's guard and drive your weapon home.",
+        "Momentum carries you through — a solid, punishing hit.",
+    ];
+
+    static readonly string[] _missNarrations =
+    [
+        "Your swing goes wide. The enemy sidesteps at the last moment.",
+        "You overextend — the attack glances off harmlessly.",
+        "The enemy reads the strike and parries with practiced ease.",
+        "A near miss. Your blade passes inches from its mark.",
+        "You stumble slightly, losing your footing. The attack fails.",
+    ];
 
     /// <summary>Starts a new session in the given world for the given player.</summary>
     /// <remarks>
@@ -32,12 +46,24 @@ public class SessionsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(SessionStateDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public IActionResult CreateSession([FromBody] CreateSessionRequest request) =>
-        CreatedAtAction(nameof(GetSession), new { id = _sessionId }, _sessionState with
-        {
-            Round = 1,
-            CombatLog = []
-        });
+    public IActionResult CreateSession([FromBody] CreateSessionRequest request)
+    {
+        if (!_worldEnemies.TryGetValue(request.WorldId, out var enemy))
+            enemy = ("Goblin Scout", 8, 1, 0, 12);
+
+        var id = Guid.NewGuid();
+        var session = new SessionStateDto(
+            SessionId:  id,
+            Status:     "Active",
+            Round:      1,
+            Player:     new(request.PlayerName, CurrentHp: 20, MaxHp: 20, AttackBonus: 3, DamageBonus: 2, ArmorClass: 15),
+            Enemy:      new(enemy.Name, CurrentHp: enemy.Hp, MaxHp: enemy.Hp, AttackBonus: enemy.Atk, DamageBonus: enemy.Dmg, ArmorClass: enemy.Ac, Status: "Alive"),
+            CombatLog:  []
+        );
+
+        _sessions[id] = session;
+        return CreatedAtAction(nameof(GetSession), new { id }, session);
+    }
 
     /// <summary>Returns the current state of a session.</summary>
     /// <param name="id">The session ID returned when the session was created.</param>
@@ -46,7 +72,8 @@ public class SessionsController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(SessionStateDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult GetSession(Guid id) => Ok(_sessionState);
+    public IActionResult GetSession(Guid id) =>
+        _sessions.TryGetValue(id, out var session) ? Ok(session) : NotFound();
 
     /// <summary>Executes an action within a session on behalf of the player.</summary>
     /// <remarks>
@@ -64,8 +91,49 @@ public class SessionsController : ControllerBase
     [ProducesResponseType(typeof(SessionStateDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult ExecuteAction(Guid id, [FromBody] ActionRequest request) =>
-        Ok(_sessionState);
+    public IActionResult ExecuteAction(Guid id, [FromBody] ActionRequest request)
+    {
+        if (!_sessions.TryGetValue(id, out var session))
+            return NotFound();
+
+        if (session.Status != "Active")
+            return BadRequest("Session is no longer active.");
+
+        var rng = Random.Shared;
+
+        // Resolve attack: d20 + AttackBonus vs ArmorClass
+        var roll   = rng.Next(1, 21);
+        var hit    = roll + session.Player.AttackBonus >= session.Enemy.ArmorClass;
+        var damage = hit ? Math.Max(1, rng.Next(1, 7) + session.Player.DamageBonus) : 0;
+
+        // Update enemy
+        var newHp            = Math.Max(0, session.Enemy.CurrentHp - damage);
+        var newEnemyStatus   = newHp <= 0 ? "Dead" : newHp <= 3 ? "Staggered" : "Alive";
+        var newSessionStatus = newEnemyStatus == "Dead" ? "Completed" : "Active";
+
+        // Pick stub narration
+        var pool      = hit ? _hitNarrations : _missNarrations;
+        var narration = pool[rng.Next(pool.Length)];
+
+        var entry = new CombatLogEntryDto(
+            Round:     session.Round,
+            Hit:       hit,
+            Damage:    damage,
+            Narration: narration,
+            Provider:  "stub"
+        );
+
+        var updated = session with
+        {
+            Status    = newSessionStatus,
+            Round     = session.Round + 1,
+            Enemy     = session.Enemy with { CurrentHp = newHp, Status = newEnemyStatus },
+            CombatLog = [..session.CombatLog, entry]
+        };
+
+        _sessions[id] = updated;
+        return Ok(updated);
+    }
 }
 
 /// <summary>Request body for starting a session.</summary>
@@ -85,12 +153,12 @@ public record ActionRequest(string Type);
 /// <param name="Enemy">Enemy state.</param>
 /// <param name="CombatLog">All combat log entries for this session, ordered by round.</param>
 public record SessionStateDto(
-    Guid                  SessionId,
-    string                Status,
-    int                   Round,
-    PlayerDto             Player,
-    EnemyDto              Enemy,
-    CombatLogEntryDto[]   CombatLog
+    Guid                SessionId,
+    string              Status,
+    int                 Round,
+    PlayerDto           Player,
+    EnemyDto            Enemy,
+    CombatLogEntryDto[] CombatLog
 );
 
 /// <summary>Player character stats and current HP.</summary>
@@ -116,6 +184,6 @@ public record EnemyDto(string Name, int CurrentHp, int MaxHp, int AttackBonus, i
 /// <param name="Round">The round number this entry belongs to.</param>
 /// <param name="Hit">Whether the attack connected.</param>
 /// <param name="Damage">Damage dealt. 0 if the attack missed.</param>
-/// <param name="Narration">AI-generated description of the round. Empty string while pending.</param>
+/// <param name="Narration">Description of the round.</param>
 /// <param name="Provider">Who generated the narration: <c>stub</c>, <c>claude</c>, or <c>pending</c>.</param>
 public record CombatLogEntryDto(int Round, bool Hit, int Damage, string Narration, string Provider);
