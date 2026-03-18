@@ -5,7 +5,9 @@
       "Bash(dotnet --list-sdks)",
       "Bash(dotnet package:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(ls -la /c/Workspace/Programming/UnlimitedRPG/UnlimitedRPG.*)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

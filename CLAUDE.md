@@ -8,7 +8,7 @@ If multiple possible ways to implement something are possible, ask which one to 
 # Git Policy
 Work on main, don't use PRs or create new branches.
 If working on main is not possible because of the user, ask him to change it.
-Commit whenever a working (as in it compiles and starts without errors) state is achieved, 
+Commit whenever a working (as in it compiles and starts without errors) state is and the users has accepted the work
 even when the feature is not done: Commit messages should be short, max 10 words.
 Never change the git history (by using --force or --hard), if it is necessary, ask the user to do it
 
@@ -18,4 +18,7 @@ There should be no errors, everything should build. If there are errors, try to 
 If fixing the errors does not work, tell the user there are errors and ask for help. 
 Give them as much info as possible for the error and your suggestion for fixes, if you have any
 
+# Documentation
+Write down a summary of the current architecture and plan in the ./UnlimitedRPG_Planning.md
+Remove outdated information, make it short and informative
 
