@@ -27,7 +27,7 @@ builder.Services
     .AddSingleton<IContentStore,        InMemoryContentStore>()
     .AddSingleton<ILlmAdapter,          StubLlmAdapter>()
     .AddSingleton<IContentOrchestrator, StubContentOrchestrator>()
-    .AddScoped<INotificationService,    SignalRNotificationService>()
+    .AddSingleton<INotificationService, SignalRNotificationService>()
     .AddScoped<IGameEngine,             GameEngine>();
 
 var app = builder.Build();

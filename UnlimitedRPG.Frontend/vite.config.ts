@@ -6,7 +6,8 @@ export default defineConfig({
 	plugins: [sveltekit(), tailwindcss()],
 	server: {
 		proxy: {
-			'/api': 'http://localhost:5069'
+			'/api': 'http://localhost:5069',
+			'/hubs': { target: 'http://localhost:5069', ws: true }
 		}
 	}
 });
