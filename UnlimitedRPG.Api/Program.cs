@@ -15,7 +15,8 @@ builder.Services.AddSwaggerGen(options =>
     options.SwaggerDoc("v1", new() { Title = "UnlimitedRPG API", Version = "v1" });
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    options.IncludeXmlComments(xmlPath);
+    if (File.Exists(xmlPath))
+        options.IncludeXmlComments(xmlPath);
 });
 builder.Services.AddControllers();
 builder.Services.AddDbContextFactory<RPGContext>(
@@ -40,3 +41,5 @@ app.MapControllers();
 app.MapHub<ContentHub>("/hubs/content");
 
 app.Run();
+
+public partial class Program { }
