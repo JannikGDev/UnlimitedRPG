@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>RpgFramework.Core</RootNamespace>
+    <RootNamespace>UnlimitedRPG.Core</RootNamespace>
   </PropertyGroup>
 
 </Project>

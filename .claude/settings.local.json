@@ -8,7 +8,11 @@
       "Bash(git commit:*)",
       "Bash(ls -la /c/Workspace/Programming/UnlimitedRPG/UnlimitedRPG.*)",
       "Bash(xargs grep:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(curl -s http://localhost:5069/api/worlds)",
+      "Bash(python -m json.tool)",
+      "Bash(taskkill //F //IM dotnet.exe)",
+      "Bash(taskkill //F //IM node.exe)"
     ]
   }
 }
