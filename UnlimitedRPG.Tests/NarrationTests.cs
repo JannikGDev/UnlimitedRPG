@@ -59,6 +59,13 @@ public class NarrationTests : IClassFixture<ApiFactory>
         Assert.Equal(1, round);
         Assert.NotEmpty(narration);
 
+        // The session in the store must also reflect the narration now
+        var getResponse = await _client.GetAsync($"/api/sessions/{session.SessionId}");
+        var stored = await getResponse.Content.ReadFromJsonAsync<SessionStateDto>();
+        Assert.NotNull(stored);
+        Assert.Equal(narration, stored.CombatLog[0].Narration);
+        Assert.Equal("stub", stored.CombatLog[0].Provider);
+
         await connection.DisposeAsync();
     }
 }

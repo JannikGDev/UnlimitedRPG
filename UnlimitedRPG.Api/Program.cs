@@ -25,6 +25,7 @@ builder.Services.AddDbContextFactory<RPGContext>(
 );
 
 builder.Services
+    .AddSingleton<SessionStore>()
     .AddSingleton<IContentStore,        InMemoryContentStore>()
     .AddSingleton<ILlmAdapter,          StubLlmAdapter>()
     .AddSingleton<IContentOrchestrator, StubContentOrchestrator>()

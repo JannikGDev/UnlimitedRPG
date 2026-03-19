@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
+using UnlimitedRPG.Api.Services;
 using UnlimitedRPG.Core.Inputs;
 using UnlimitedRPG.Core.Interfaces;
 using UnlimitedRPG.Core.Model;
@@ -10,9 +10,8 @@ namespace UnlimitedRPG.Api.Controllers;
 [ApiController]
 [Route("api/sessions")]
 [Produces("application/json")]
-public class SessionsController(IGameEngine engine, IContentOrchestrator orchestrator) : ControllerBase
+public class SessionsController(IGameEngine engine, IContentOrchestrator orchestrator, SessionStore sessions) : ControllerBase
 {
-    static readonly ConcurrentDictionary<Guid, SessionStateDto> _sessions = new();
 
     // Enemy pool keyed by world ID
     static readonly Dictionary<Guid, (string Name, int Hp, int Atk, int Dmg, int Ac)> _worldEnemies = new()
@@ -46,7 +45,7 @@ public class SessionsController(IGameEngine engine, IContentOrchestrator orchest
             CombatLog:  []
         );
 
-        _sessions[id] = session;
+        sessions.Set(id, session);
         return CreatedAtAction(nameof(GetSession), new { id }, session);
     }
 
@@ -58,7 +57,7 @@ public class SessionsController(IGameEngine engine, IContentOrchestrator orchest
     [ProducesResponseType(typeof(SessionStateDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult GetSession(Guid id) =>
-        _sessions.TryGetValue(id, out var session) ? Ok(session) : NotFound();
+        sessions.TryGet(id, out var session) ? Ok(session) : NotFound();
 
     /// <summary>Executes an action within a session on behalf of the player.</summary>
     /// <remarks>
@@ -78,7 +77,7 @@ public class SessionsController(IGameEngine engine, IContentOrchestrator orchest
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult ExecuteAction(Guid id, [FromBody] ActionRequest request)
     {
-        if (!_sessions.TryGetValue(id, out var session))
+        if (!sessions.TryGet(id, out var session))
             return NotFound();
 
         if (session.Status != "Active")
@@ -115,7 +114,7 @@ public class SessionsController(IGameEngine engine, IContentOrchestrator orchest
             CombatLog = [..session.CombatLog, entry]
         };
 
-        _sessions[id] = updated;
+        sessions.Set(id, updated);
 
         _ = orchestrator.EnqueueNarrationAsync(id, result.Event);
 
