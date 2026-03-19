@@ -2,7 +2,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using RpgFramework.Core.Model;
+using UnlimitedRPG.Core.Model;
 
 public class CombatLogConfiguration : IEntityTypeConfiguration<CombatLog>
 {

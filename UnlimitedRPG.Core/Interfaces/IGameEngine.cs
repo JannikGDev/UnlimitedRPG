@@ -1,6 +1,6 @@
-using RpgFramework.Core.Model;
+using UnlimitedRPG.Core.Model;
 
-namespace RpgFramework.Core.Interfaces;
+namespace UnlimitedRPG.Core.Interfaces;
 
 public interface IGameEngine
 {

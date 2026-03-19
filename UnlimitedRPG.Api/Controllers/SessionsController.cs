@@ -1,13 +1,16 @@
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
+using UnlimitedRPG.Core.Inputs;
+using UnlimitedRPG.Core.Interfaces;
+using UnlimitedRPG.Core.Model;
 
-namespace RpgFramework.Api.Controllers;
+namespace UnlimitedRPG.Api.Controllers;
 
 /// <summary>Manage combat sessions. A session ties a player character to a world and an enemy encounter.</summary>
 [ApiController]
 [Route("api/sessions")]
 [Produces("application/json")]
-public class SessionsController : ControllerBase
+public class SessionsController(IGameEngine engine, IContentOrchestrator orchestrator) : ControllerBase
 {
     static readonly ConcurrentDictionary<Guid, SessionStateDto> _sessions = new();
 
@@ -17,24 +20,6 @@ public class SessionsController : ControllerBase
         [Guid.Parse("00000000-0000-0000-0000-000000000001")] = ("Shadow Wraith",  10, 2, 1, 13),
         [Guid.Parse("00000000-0000-0000-0000-000000000002")] = ("Drowned Knight", 14, 3, 2, 15),
     };
-
-    static readonly string[] _hitNarrations =
-    [
-        "You press forward and your blade finds its mark — the enemy recoils.",
-        "A feint left, then a decisive strike. The blow lands clean.",
-        "The attack connects with a satisfying crack. The enemy staggers.",
-        "You exploit a gap in the enemy's guard and drive your weapon home.",
-        "Momentum carries you through — a solid, punishing hit.",
-    ];
-
-    static readonly string[] _missNarrations =
-    [
-        "Your swing goes wide. The enemy sidesteps at the last moment.",
-        "You overextend — the attack glances off harmlessly.",
-        "The enemy reads the strike and parries with practiced ease.",
-        "A near miss. Your blade passes inches from its mark.",
-        "You stumble slightly, losing your footing. The attack fails.",
-    ];
 
     /// <summary>Starts a new session in the given world for the given player.</summary>
     /// <remarks>
@@ -99,39 +84,41 @@ public class SessionsController : ControllerBase
         if (session.Status != "Active")
             return BadRequest("Session is no longer active.");
 
-        var rng = Random.Shared;
+        var state = new GameState(
+            Round:  session.Round,
+            Player: new(session.Player.CurrentHp, session.Player.MaxHp, session.Player.AttackBonus, session.Player.DamageBonus, session.Player.ArmorClass),
+            Enemy:  new(session.Enemy.CurrentHp, session.Enemy.MaxHp, session.Enemy.AttackBonus, session.Enemy.DamageBonus, session.Enemy.ArmorClass,
+                        Enum.Parse<EnemyStatus>(session.Enemy.Status))
+        );
 
-        // Resolve attack: d20 + AttackBonus vs ArmorClass
-        var roll   = rng.Next(1, 21);
-        var hit    = roll + session.Player.AttackBonus >= session.Enemy.ArmorClass;
-        var damage = hit ? Math.Max(1, rng.Next(1, 7) + session.Player.DamageBonus) : 0;
+        var result = engine.Process(state, new PlayerAttackInput());
 
-        // Update enemy
-        var newHp            = Math.Max(0, session.Enemy.CurrentHp - damage);
-        var newEnemyStatus   = newHp <= 0 ? "Dead" : newHp <= 3 ? "Staggered" : "Alive";
-        var newSessionStatus = newEnemyStatus == "Dead" ? "Completed" : "Active";
-
-        // Pick stub narration
-        var pool      = hit ? _hitNarrations : _missNarrations;
-        var narration = pool[rng.Next(pool.Length)];
+        var newSessionStatus = result.NewState.Enemy.Status == EnemyStatus.Dead ? "Completed" : "Active";
 
         var entry = new CombatLogEntryDto(
-            Round:     session.Round,
-            Hit:       hit,
-            Damage:    damage,
-            Narration: narration,
-            Provider:  "stub"
+            Round:     result.Event.Round,
+            Hit:       result.Event.Hit,
+            Damage:    result.Event.Damage,
+            Narration: string.Empty,
+            Provider:  "pending"
         );
 
         var updated = session with
         {
             Status    = newSessionStatus,
-            Round     = session.Round + 1,
-            Enemy     = session.Enemy with { CurrentHp = newHp, Status = newEnemyStatus },
+            Round     = result.NewState.Round,
+            Enemy     = session.Enemy with
+            {
+                CurrentHp = result.NewState.Enemy.CurrentHp,
+                Status    = result.NewState.Enemy.Status.ToString()
+            },
             CombatLog = [..session.CombatLog, entry]
         };
 
         _sessions[id] = updated;
+
+        _ = orchestrator.EnqueueNarrationAsync(id, result.Event);
+
         return Ok(updated);
     }
 }
@@ -184,6 +171,6 @@ public record EnemyDto(string Name, int CurrentHp, int MaxHp, int AttackBonus, i
 /// <param name="Round">The round number this entry belongs to.</param>
 /// <param name="Hit">Whether the attack connected.</param>
 /// <param name="Damage">Damage dealt. 0 if the attack missed.</param>
-/// <param name="Narration">Description of the round.</param>
+/// <param name="Narration">Description of the round. Empty while <c>Provider</c> is <c>pending</c>.</param>
 /// <param name="Provider">Who generated the narration: <c>stub</c>, <c>claude</c>, or <c>pending</c>.</param>
 public record CombatLogEntryDto(int Round, bool Hit, int Damage, string Narration, string Provider);

@@ -1,5 +1,5 @@
-using RpgFramework.Core.Interfaces;
+using UnlimitedRPG.Core.Interfaces;
 
-namespace RpgFramework.Core.Inputs;
+namespace UnlimitedRPG.Core.Inputs;
 
 public record PlayerAttackInput() : IInput;

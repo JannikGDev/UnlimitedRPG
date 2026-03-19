@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { onDestroy } from 'svelte';
+	import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 	import { getSession, executeAction } from '$lib/api';
 	import type { SessionStateDto } from '$lib/api';
 	import type { PageData } from './$types';
@@ -10,10 +12,35 @@
 	let acting = $state(false);
 	let error = $state('');
 
+	const hub = new HubConnectionBuilder()
+		.withUrl('/hubs/content')
+		.withAutomaticReconnect()
+		.build();
+
+	hub.on('NarrationReady', (_sessionId: string, round: number, narration: string) => {
+		if (!session) return;
+		session = {
+			...session,
+			combatLog: session.combatLog.map((e) =>
+				e.round === round && e.provider === 'pending'
+					? { ...e, narration, provider: 'stub' }
+					: e
+			)
+		};
+	});
+
 	$effect(() => {
 		getSession(data.id)
-			.then((s) => (session = s))
+			.then((s) => {
+				session = s;
+				return hub.start();
+			})
+			.then(() => hub.invoke('JoinSession', data.id))
 			.catch(() => (error = 'Failed to load session.'));
+	});
+
+	onDestroy(() => {
+		if (hub.state !== HubConnectionState.Disconnected) hub.stop();
 	});
 
 	async function attack() {

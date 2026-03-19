@@ -79,7 +79,7 @@ public interface ILlmAdapter
 
 public interface IContentOrchestrator
 {
-    Task EnqueueNarrationAsync(Guid sessionId, int round, CancellationToken ct = default);
+    Task EnqueueNarrationAsync(Guid sessionId, CombatEvent combatEvent, CancellationToken ct = default);
 }
 
 public interface IContentStore
@@ -87,47 +87,71 @@ public interface IContentStore
     Task SaveAsync<T>(string id, T entity, CancellationToken ct = default);
     Task<T?> GetAsync<T>(string id, CancellationToken ct = default);
 }
+
+public interface INotificationService
+{
+    Task SendNarrationAsync(Guid sessionId, int round, string narration, CancellationToken ct = default);
+}
+
+public interface IGameEngine
+{
+    ProcessResult Process(GameState state, IInput input);
+}
 ```
 
 ---
 
-## Stub Implementations (UnlimitedRPG.Stubs)
+## Implementations
+
+### Stubs (UnlimitedRPG.Stubs)
 
 | Stub | Behavior |
 |---|---|
 | `StubLlmAdapter` | Returns fixed text after a 200ms fake delay |
-| `StubContentOrchestrator` | Calls stub LLM, saves to store, pushes via SignalR |
+| `StubContentOrchestrator` | Fire-and-forgets: calls stub LLM, pushes via INotificationService |
 | `InMemoryContentStore` | ConcurrentDictionary, JSON-serialized values |
+
+### Api (UnlimitedRPG.Api)
+
+| Class | Purpose |
+|---|---|
+| `GameEngine` | Implements `IGameEngine` — d20 hit check, 1d6 damage, enemy status transitions |
+| `ContentHub` | SignalR hub at `/hubs/content` — exposes `JoinSession(Guid)` |
+| `SignalRNotificationService` | Implements `INotificationService` — pushes via `IHubContext<ContentHub>` |
 
 ---
 
 ## Combat Flow
 
-1. Client calls `POST /api/rpg/sessions/{id}/attack`
-2. Engine rolls dice deterministically (hit = d20 + AttackBonus vs ArmorClass, damage = 1d6 + DamageBonus)
-3. `Enemy.ApplyDamage(damage)` updates HP and status
-4. `CombatLog` row created with `Provider = "pending"`
-5. `IContentOrchestrator.EnqueueNarrationAsync(...)` called — returns immediately
-6. Response returned to client with combat result
-7. Orchestrator generates narration async → updates log → pushes `NarrationReady` via SignalR
+1. Client calls `POST /api/sessions/{id}/actions`
+2. `IGameEngine.Process(state, PlayerAttackInput)` → `ProcessResult(newState, CombatEvent)`
+3. `CombatLog` entry created with `Provider = "pending"`, empty narration
+4. `IContentOrchestrator.EnqueueNarrationAsync(sessionId, combatEvent)` — fire-and-forget
+5. Response returned to client with updated state
+6. Orchestrator: LLM generates narration → `INotificationService.SendNarrationAsync` → SignalR pushes `NarrationReady`
+7. Frontend receives `NarrationReady(sessionId, round, narration)` → updates log entry in place
 
 ---
 
 ## SignalR Hub
 
 - Route: `/hubs/content`
-- Message pushed to client: `NarrationReady(Guid sessionId, int round, string narration)`
+- Client invokes: `JoinSession(Guid sessionId)` → joins group
+- Server pushes: `NarrationReady(Guid sessionId, int round, string narration)`
 
 ---
 
-## DI Registration (Program.cs pattern)
+## DI Registration (Program.cs)
 
 ```csharp
 builder.Services
     .AddSingleton<IContentStore,        InMemoryContentStore>()
     .AddSingleton<ILlmAdapter,          StubLlmAdapter>()
     .AddSingleton<IContentOrchestrator, StubContentOrchestrator>()
-    .AddSignalR();
+    .AddScoped<INotificationService,    SignalRNotificationService>()
+    .AddScoped<IGameEngine,             GameEngine>();
+
+app.MapHub<ContentHub>("/hubs/content");
 ```
 
 ---
@@ -135,13 +159,18 @@ builder.Services
 ## Status
 
 **Done:**
-- All domain models
-- EF Core DbContext + entity configurations (in-memory)
-- Basic worlds CRUD endpoint
+- All domain models + EF Core DbContext (in-memory)
+- All Core interfaces
+- Stub implementations (StubLlmAdapter, StubContentOrchestrator, InMemoryContentStore)
+- GameEngine (deterministic combat resolution)
+- SignalR hub (ContentHub) + SignalRNotificationService
+- Full DI wiring
+- Sessions API (create, get, execute action)
+- Worlds API (list worlds)
+- Frontend: world selection, session combat UI, SignalR NarrationReady handler
 
 **Next:**
-- Core interfaces
-- Stub implementations
-- SignalR hub
-- API endpoints: users, characters, enemy templates, sessions, attack
-- DI wiring
+- Replace hardcoded world/enemy data with database-seeded EF Core data
+- Enemy counter-attacks (enemy attacks player each round)
+- Real LLM adapter (Claude API)
+- User + character creation endpoints and frontend

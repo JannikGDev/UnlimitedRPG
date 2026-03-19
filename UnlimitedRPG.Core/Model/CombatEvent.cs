@@ -1,4 +1,4 @@
-namespace RpgFramework.Core.Model;
+namespace UnlimitedRPG.Core.Model;
 
 public record CombatEvent(
     int  Round,

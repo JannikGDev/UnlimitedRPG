@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using RpgFramework.Core.Model;
+using UnlimitedRPG.Core.Model;
 
 namespace UnlimitedRPG.Database.EntityConfigurations;
 

@@ -1,3 +1,3 @@
-namespace RpgFramework.Core.Interfaces;
+namespace UnlimitedRPG.Core.Interfaces;
 
 public interface IInput { }

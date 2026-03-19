@@ -1,5 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using UnlimitedRPG.Api.Engine;
+using UnlimitedRPG.Api.Hubs;
+using UnlimitedRPG.Api.Services;
+using UnlimitedRPG.Core.Interfaces;
 using UnlimitedRPG.Database;
+using UnlimitedRPG.Stubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +23,13 @@ builder.Services.AddDbContextFactory<RPGContext>(
         .UseInMemoryDatabase("MemoryDatabase")
 );
 
+builder.Services
+    .AddSingleton<IContentStore,        InMemoryContentStore>()
+    .AddSingleton<ILlmAdapter,          StubLlmAdapter>()
+    .AddSingleton<IContentOrchestrator, StubContentOrchestrator>()
+    .AddScoped<INotificationService,    SignalRNotificationService>()
+    .AddScoped<IGameEngine,             GameEngine>();
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -25,5 +37,6 @@ app.UseSwaggerUI();
 
 app.MapGet("/health", () => "ok").WithName("Health");
 app.MapControllers();
+app.MapHub<ContentHub>("/hubs/content");
 
 app.Run();

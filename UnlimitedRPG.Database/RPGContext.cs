@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using RpgFramework.Core.Model;
+using UnlimitedRPG.Core.Model;
 
 namespace UnlimitedRPG.Database;
 

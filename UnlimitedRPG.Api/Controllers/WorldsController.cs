@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace RpgFramework.Api.Controllers;
+namespace UnlimitedRPG.Api.Controllers;
 
 /// <summary>Manage worlds. A world defines the setting and enemy pool for a session.</summary>
 [ApiController]

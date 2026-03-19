@@ -1,6 +1,4 @@
-using RpgFramework.Core.Model;
-
-namespace RpgFramework.Core.Model;
+namespace UnlimitedRPG.Core.Model;
 
 public record GameState(
     int          Round,
