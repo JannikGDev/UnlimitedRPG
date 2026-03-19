@@ -12,7 +12,10 @@
       "Bash(curl -s http://localhost:5069/api/worlds)",
       "Bash(python -m json.tool)",
       "Bash(taskkill //F //IM dotnet.exe)",
-      "Bash(taskkill //F //IM node.exe)"
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(xargs cat:*)",
+      "Bash(find C:WorkspaceProgrammingUnlimitedRPGUnlimitedRPG.Tests -maxdepth 1 -type f -name *.cs)",
+      "Bash(dotnet test:*)"
     ]
   }
 }

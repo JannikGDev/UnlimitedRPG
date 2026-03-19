@@ -18,6 +18,10 @@ There should be no errors, everything should build. If there are errors, try to 
 If fixing the errors does not work, tell the user there are errors and ask for help. 
 Give them as much info as possible for the error and your suggestion for fixes, if you have any
 
+# Smoke testing
+Run smoke tests after each change that builds successfully. 
+If the tests fail (when they passed before), try to fix them or ask for help.
+
 # Documentation
 Write down a summary of the current architecture and plan in the ./UnlimitedRPG_Planning.md
 Remove outdated information, make it short and informative
