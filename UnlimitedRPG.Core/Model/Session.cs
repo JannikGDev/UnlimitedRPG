@@ -2,9 +2,10 @@
 
 public class Session
 {
-    public Guid          Id                  { get; init; } = Guid.NewGuid();
+    public Guid          Id                  { get; set; }  = Guid.NewGuid();
     public DateTime      StartedAt           { get; init; } = DateTime.UtcNow;
     public SessionStatus Status              { get; private set; } = SessionStatus.Active;
+    public int           Round              { get; set; }         = 1;
 
     // References — independent lifecycles
     public Guid            WorldId           { get; init; }

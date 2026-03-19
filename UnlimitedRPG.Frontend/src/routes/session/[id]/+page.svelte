@@ -19,6 +19,7 @@
 
 	hub.on('NarrationReady', (_sessionId: string, round: number, narration: string) => {
 		if (!session) return;
+		console.log(session);
 		session = {
 			...session,
 			combatLog: session.combatLog.map((e) =>

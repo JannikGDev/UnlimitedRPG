@@ -2,7 +2,7 @@
 
 public class CombatLog
 {
-    public Guid     Id        { get; init; } = Guid.NewGuid();
+    public Guid     Id        { get; set; }  = Guid.NewGuid();
     public int      Round     { get; init; }
     public bool     Hit       { get; init; }
     public int      Damage    { get; init; }

@@ -12,6 +12,7 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
 
         builder.Property(s => s.StartedAt).IsRequired();
         builder.Property(s => s.Status).IsRequired();
+        builder.Property(s => s.Round).IsRequired();
 
         builder.HasOne(s => s.World)
             .WithMany()

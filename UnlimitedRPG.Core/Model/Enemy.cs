@@ -2,7 +2,7 @@
 
 public class Enemy
 {
-    public Guid        Id         { get; init; } = Guid.NewGuid();
+    public Guid        Id         { get; set; }  = Guid.NewGuid();
     public int         CurrentHp  { get; set; }  // mutable — takes damage
     public EnemyStatus Status     { get; set; }  // mutable — changes each round
 

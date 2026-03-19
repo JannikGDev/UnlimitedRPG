@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
-using UnlimitedRPG.Api.Services;
+using Microsoft.EntityFrameworkCore;
+using UnlimitedRPG.Api.Engine;
 using UnlimitedRPG.Core.Inputs;
 using UnlimitedRPG.Core.Interfaces;
 using UnlimitedRPG.Core.Model;
+using UnlimitedRPG.Database;
 
 namespace UnlimitedRPG.Api.Controllers;
 
@@ -10,43 +12,48 @@ namespace UnlimitedRPG.Api.Controllers;
 [ApiController]
 [Route("api/sessions")]
 [Produces("application/json")]
-public class SessionsController(IGameEngine engine, IContentOrchestrator orchestrator, SessionStore sessions) : ControllerBase
+public class SessionsController(
+    IGameEngine engine,
+    IContentOrchestrator orchestrator,
+    IDbContextFactory<RPGContext> db) : ControllerBase
 {
-
-    // Enemy pool keyed by world ID
-    static readonly Dictionary<Guid, (string Name, int Hp, int Atk, int Dmg, int Ac)> _worldEnemies = new()
-    {
-        [Guid.Parse("00000000-0000-0000-0000-000000000001")] = ("Shadow Wraith",  10, 2, 1, 13),
-        [Guid.Parse("00000000-0000-0000-0000-000000000002")] = ("Drowned Knight", 14, 3, 2, 15),
-    };
-
     /// <summary>Starts a new session in the given world for the given player.</summary>
     /// <remarks>
     /// The session begins at round 1 with a fresh enemy spawned from the world's enemy pool.
     /// The combat log is empty until the first action is executed.
     /// </remarks>
     /// <response code="201">The newly created session state.</response>
-    /// <response code="400">Invalid request body.</response>
+    /// <response code="400">Invalid request body or unknown world.</response>
     [HttpPost]
     [ProducesResponseType(typeof(SessionStateDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public IActionResult CreateSession([FromBody] CreateSessionRequest request)
+    public async Task<IActionResult> CreateSession([FromBody] CreateSessionRequest request)
     {
-        if (!_worldEnemies.TryGetValue(request.WorldId, out var enemy))
-            enemy = ("Goblin Scout", 8, 1, 0, 12);
+        await using var ctx = await db.CreateDbContextAsync();
 
-        var id = Guid.NewGuid();
-        var session = new SessionStateDto(
-            SessionId:  id,
-            Status:     "Active",
-            Round:      1,
-            Player:     new(request.PlayerName, CurrentHp: 20, MaxHp: 20, AttackBonus: 3, DamageBonus: 2, ArmorClass: 15),
-            Enemy:      new(enemy.Name, CurrentHp: enemy.Hp, MaxHp: enemy.Hp, AttackBonus: enemy.Atk, DamageBonus: enemy.Dmg, ArmorClass: enemy.Ac, Status: "Alive"),
-            CombatLog:  []
-        );
+        var template = await ctx.EnemyTemplates
+            .Include(t => t.World)
+            .FirstOrDefaultAsync(t => t.WorldId == request.WorldId);
 
-        sessions.Set(id, session);
-        return CreatedAtAction(nameof(GetSession), new { id }, session);
+        if (template is null)
+            return BadRequest($"No enemy template found for world {request.WorldId}.");
+
+        var user      = new User            { Username = request.PlayerName, Email = $"{request.PlayerName}@stub.local" };
+        var character = new PlayerCharacter { Name = request.PlayerName, Hp = 20, AttackBonus = 3, DamageBonus = 2, ArmorClass = 15, UserId = user.Id, User = user };
+        var enemy     = template.Instantiate();
+        var session   = new Session
+        {
+            WorldId           = request.WorldId,
+            UserId            = user.Id,            User            = user,
+            PlayerCharacterId = character.Id,       PlayerCharacter = character,
+            Enemy             = enemy,
+            Round             = 1,
+        };
+
+        ctx.Sessions.Add(session);
+        await ctx.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetSession), new { id = session.Id }, ToDto(session));
     }
 
     /// <summary>Returns the current state of a session.</summary>
@@ -56,8 +63,18 @@ public class SessionsController(IGameEngine engine, IContentOrchestrator orchest
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(SessionStateDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult GetSession(Guid id) =>
-        sessions.TryGet(id, out var session) ? Ok(session) : NotFound();
+    public async Task<IActionResult> GetSession(Guid id)
+    {
+        await using var ctx = await db.CreateDbContextAsync();
+
+        var session = await ctx.Sessions
+            .Include(s => s.PlayerCharacter)
+            .Include(s => s.Enemy).ThenInclude(e => e.Template)
+            .Include(s => s.CombatLog)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        return session is null ? NotFound() : Ok(ToDto(session));
+    }
 
     /// <summary>Executes an action within a session on behalf of the player.</summary>
     /// <remarks>
@@ -75,51 +92,95 @@ public class SessionsController(IGameEngine engine, IContentOrchestrator orchest
     [ProducesResponseType(typeof(SessionStateDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public IActionResult ExecuteAction(Guid id, [FromBody] ActionRequest request)
+    public async Task<IActionResult> ExecuteAction(Guid id, [FromBody] ActionRequest request)
     {
-        if (!sessions.TryGet(id, out var session))
-            return NotFound();
+        await using var ctx = await db.CreateDbContextAsync();
 
-        if (session.Status != "Active")
-            return BadRequest("Session is no longer active.");
+        // Read pass — AsNoTracking avoids InMemory shadow-FK tracking issues
+        var session = await ctx.Sessions
+            .Include(s => s.PlayerCharacter)
+            .Include(s => s.Enemy).ThenInclude(e => e.Template)
+            .Include(s => s.CombatLog)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        if (session is null) return NotFound();
+        if (session.Status != SessionStatus.Active) return BadRequest("Session is no longer active.");
 
         var state = new GameState(
             Round:  session.Round,
-            Player: new(session.Player.CurrentHp, session.Player.MaxHp, session.Player.AttackBonus, session.Player.DamageBonus, session.Player.ArmorClass),
-            Enemy:  new(session.Enemy.CurrentHp, session.Enemy.MaxHp, session.Enemy.AttackBonus, session.Enemy.DamageBonus, session.Enemy.ArmorClass,
-                        Enum.Parse<EnemyStatus>(session.Enemy.Status))
+            Player: new(session.PlayerCharacter.Hp, session.PlayerCharacter.Hp,
+                        session.PlayerCharacter.AttackBonus, session.PlayerCharacter.DamageBonus,
+                        session.PlayerCharacter.ArmorClass),
+            Enemy:  new(session.Enemy.CurrentHp, session.Enemy.Template.BaseHp,
+                        session.Enemy.Template.AttackBonus, session.Enemy.Template.DamageBonus,
+                        session.Enemy.Template.ArmorClass, session.Enemy.Status)
         );
 
         var result = engine.Process(state, new PlayerAttackInput());
 
-        var newSessionStatus = result.NewState.Enemy.Status == EnemyStatus.Dead ? "Completed" : "Active";
+        // Write pass — load only the mutable entities by PK so EF tracks them cleanly
+        var enemy   = await ctx.Set<Enemy>().FindAsync(session.Enemy.Id);
+        var tracked = await ctx.Sessions.FindAsync(id);
 
-        var entry = new CombatLogEntryDto(
-            Round:     result.Event.Round,
-            Hit:       result.Event.Hit,
-            Damage:    result.Event.Damage,
-            Narration: string.Empty,
-            Provider:  "pending"
-        );
+        enemy!.CurrentHp = result.NewState.Enemy.CurrentHp;
+        enemy.Status     = result.NewState.Enemy.Status;
+        tracked!.Round   = result.NewState.Round;
+        if (result.NewState.Enemy.Status == EnemyStatus.Dead) tracked.Complete();
 
-        var updated = session with
+        var entry = new CombatLog
         {
-            Status    = newSessionStatus,
-            Round     = result.NewState.Round,
-            Enemy     = session.Enemy with
-            {
-                CurrentHp = result.NewState.Enemy.CurrentHp,
-                Status    = result.NewState.Enemy.Status.ToString()
-            },
-            CombatLog = [..session.CombatLog, entry]
+            Round     = result.Event.Round,
+            Hit       = result.Event.Hit,
+            Damage    = result.Event.Damage,
+            Narration = string.Empty,
+            Provider  = "pending",
+            SessionId = id,
         };
-
-        sessions.Set(id, updated);
+        ctx.CombatLogs.Add(entry);
+        await ctx.SaveChangesAsync();
 
         _ = orchestrator.EnqueueNarrationAsync(id, result.Event);
 
-        return Ok(updated);
+        // Reload for the response DTO (includes Template name, full combat log, etc.)
+        var updated = await ctx.Sessions
+            .Include(s => s.PlayerCharacter)
+            .Include(s => s.Enemy).ThenInclude(e => e.Template)
+            .Include(s => s.CombatLog)
+            .AsNoTracking()
+            .FirstAsync(s => s.Id == id);
+
+        return Ok(ToDto(updated));
     }
+
+    // ── Mapping ─────────────────────────────────────────────────────────────
+
+    static SessionStateDto ToDto(Session s) => new(
+        SessionId:  s.Id,
+        Status:     s.Status.ToString(),
+        Round:      s.Round,
+        Player: new(
+            s.PlayerCharacter.Name,
+            CurrentHp:    s.PlayerCharacter.Hp,
+            MaxHp:        s.PlayerCharacter.Hp,
+            AttackBonus:  s.PlayerCharacter.AttackBonus,
+            DamageBonus:  s.PlayerCharacter.DamageBonus,
+            ArmorClass:   s.PlayerCharacter.ArmorClass
+        ),
+        Enemy: new(
+            s.Enemy.Template.Name,
+            CurrentHp:    s.Enemy.CurrentHp,
+            MaxHp:        s.Enemy.Template.BaseHp,
+            AttackBonus:  s.Enemy.Template.AttackBonus,
+            DamageBonus:  s.Enemy.Template.DamageBonus,
+            ArmorClass:   s.Enemy.Template.ArmorClass,
+            Status:       s.Enemy.Status.ToString()
+        ),
+        CombatLog: s.CombatLog
+            .OrderBy(e => e.Round)
+            .Select(e => new CombatLogEntryDto(e.Round, e.Hit, e.Damage, e.Narration, e.Provider))
+            .ToArray()
+    );
 }
 
 /// <summary>Request body for starting a session.</summary>

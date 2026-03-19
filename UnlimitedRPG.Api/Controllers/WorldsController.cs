@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using UnlimitedRPG.Core.Model;
+using UnlimitedRPG.Database;
 
 namespace UnlimitedRPG.Api.Controllers;
 
@@ -6,28 +9,32 @@ namespace UnlimitedRPG.Api.Controllers;
 [ApiController]
 [Route("api/worlds")]
 [Produces("application/json")]
-public class WorldsController : ControllerBase
+public class WorldsController(IDbContextFactory<RPGContext> db) : ControllerBase
 {
-    static readonly WorldDto[] _worlds =
-    [
-        new(Guid.Parse("00000000-0000-0000-0000-000000000001"), "The Darklands"),
-        new(Guid.Parse("00000000-0000-0000-0000-000000000002"), "Sunken Vale"),
-    ];
-
     /// <summary>Returns all available worlds.</summary>
     /// <response code="200">List of worlds.</response>
     [HttpGet]
     [ProducesResponseType(typeof(WorldDto[]), StatusCodes.Status200OK)]
-    public IActionResult GetWorlds() => Ok(_worlds);
+    public async Task<IActionResult> GetWorlds()
+    {
+        await using var ctx = await db.CreateDbContextAsync();
+        var worlds = await ctx.Worlds
+            .Select(w => new WorldDto(w.Id, w.Name))
+            .ToArrayAsync();
+        return Ok(worlds);
+    }
 
     /// <summary>Creates a new world with the given name.</summary>
     /// <response code="201">The newly created world.</response>
     [HttpPost]
     [ProducesResponseType(typeof(WorldDto), StatusCodes.Status201Created)]
-    public IActionResult CreateWorld([FromBody] CreateWorldRequest request)
+    public async Task<IActionResult> CreateWorld([FromBody] CreateWorldRequest request)
     {
-        var world = new WorldDto(Guid.Parse("00000000-0000-0000-0000-000000000001"), request.Name);
-        return CreatedAtAction(nameof(GetWorlds), new { id = world.Id }, world);
+        await using var ctx = await db.CreateDbContextAsync();
+        var world = new World { Name = request.Name };
+        ctx.Worlds.Add(world);
+        await ctx.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetWorlds), new { id = world.Id }, new WorldDto(world.Id, world.Name));
     }
 }
 
