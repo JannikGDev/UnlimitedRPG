@@ -19,6 +19,7 @@
     <ProjectReference Include="..\UnlimitedRPG.Core\UnlimitedRPG.Core.csproj" />
     <ProjectReference Include="..\UnlimitedRPG.Database\UnlimitedRPG.Database.csproj" />
     <ProjectReference Include="..\UnlimitedRPG.Stubs\UnlimitedRPG.Stubs.csproj" />
+    <ProjectReference Include="..\UnlimitedRPG.TextGenerator\UnlimitedRPG.TextGenerator.csproj" />
   </ItemGroup>
 
 </Project>
