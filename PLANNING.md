@@ -38,6 +38,6 @@ The following personas are stand-ins for different roles of users:
 
 [Done][R6]The session page shows a chat-style message history and an input area with a mode selector ("Say something" / "Do something").
 
-[Open][R7]RPGPlayer can type a message, select a mode, and send it — the message appears in the chat history with its mode indicated.
+[Done][R7]RPGPlayer can type a message, select a mode, and send it — the message appears in the chat history with its mode indicated.
 
 [Open][R8]After the player sends a message, the game generates a text response and displays it in the chat.

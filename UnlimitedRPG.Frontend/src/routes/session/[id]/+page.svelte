@@ -15,6 +15,13 @@
 	let input = $state('');
 	let mode = $state<Mode>('say');
 	let nextId = 0;
+
+	function send() {
+		const text = input.trim();
+		if (!text) return;
+		messages.push({ id: nextId++, mode, text });
+		input = '';
+	}
 </script>
 
 <div class="flex flex-col h-screen">
@@ -32,7 +39,7 @@
 		{#each messages as msg (msg.id)}
 			<div class="flex flex-col gap-0.5">
 				<span class="text-xs text-gray-400">{msg.mode === 'say' ? 'Say' : 'Do'}</span>
-				<p class="text-sm bg-gray-100 rounded px-3 py-2 self-end max-w-prose">{msg.text}</p>
+				<p class="text-sm text-gray-900 bg-gray-100 rounded px-3 py-2 self-end max-w-prose">{msg.text}</p>
 			</div>
 		{/each}
 	</div>
@@ -59,7 +66,7 @@
 
 		<!-- Text input + send -->
 		<form
-			onsubmit={(e) => { e.preventDefault(); }}
+			onsubmit={(e) => { e.preventDefault(); send(); }}
 			class="flex gap-2"
 		>
 			<input
