@@ -28,9 +28,9 @@ The following personas are stand-ins for different roles of users:
 # Milestone 1 - MVP
 [Done][R1]RPGPlayer can open the website without an error.
 
-[Open][R2]RPGPlayer can create and save a character by giving a name and a short free-text description.
+[Done][R2]RPGPlayer can create and save a character by giving a name and a short free-text description.
 
-[Open][R3]RPGPlayer can see all created characters in a list and open them to see the details
+[Done][R3]RPGPlayer can see all created characters in a list and open them to see the details
 
 [Open][R4]RPGPlayer can can edit the characters after saving them.
 

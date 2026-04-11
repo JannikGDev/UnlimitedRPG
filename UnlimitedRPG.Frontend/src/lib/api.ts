@@ -17,6 +17,10 @@ export function getCharacters(): Promise<CharacterDto[]> {
 	return request('/api/characters');
 }
 
+export function getCharacter(id: string): Promise<CharacterDto> {
+	return request(`/api/characters/${id}`);
+}
+
 export function createCharacter(name: string, description: string): Promise<CharacterDto> {
 	return request('/api/characters', {
 		method: 'POST',

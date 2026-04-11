@@ -42,9 +42,11 @@
 		{:else}
 			<ul class="space-y-2">
 				{#each characters as character}
-					<li class="rounded border p-3">
-						<p class="font-medium">{character.name}</p>
-						<p class="text-sm text-gray-600">{character.description}</p>
+					<li class="hover:bg-gray-600">
+						<a href="/characters/{character.id}" class="block rounded border p-3">
+							<p class="font-medium">{character.name}</p>
+							<p class="text-sm text-gray-200">{character.description}</p>
+						</a>
 					</li>
 				{/each}
 			</ul>

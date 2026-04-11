@@ -20,6 +20,16 @@ public class CharactersController(IDbContextFactory<RPGContext> dbFactory) : Con
         return Ok(characters);
     }
 
+    /// <summary>Returns a single character by id.</summary>
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var character = await db.PlayerCharacters.FindAsync(id);
+        if (character is null) return NotFound();
+        return Ok(new CharacterDto(character.Id, character.Name, character.Description));
+    }
+
     /// <summary>Creates a new character.</summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCharacterRequest request)
