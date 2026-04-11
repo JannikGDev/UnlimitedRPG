@@ -42,6 +42,15 @@ The backend is deployed as a monolith, but the internal structure should be high
 - `Api` → `Core`, `Database`, `Stubs`
 - `Tests` → `Core`, `Stubs`
 
+# EF Core Rules
+
+Only use EF Core methods that are compatible with all provider types (InMemory, PostgreSQL, SQLite).
+
+**Do not use:**
+- `ExecuteUpdateAsync` / `ExecuteDeleteAsync` — bulk update/delete operations are not supported by the InMemory provider.
+
+**Always use:** load the entity via `FindAsync` or `SingleOrDefaultAsync`, mutate it, then call `SaveChangesAsync`.
+
 # Frontend Component
 
 - SvelteKit application in `UnlimitedRPG.Frontend/`
@@ -53,7 +62,7 @@ The backend is deployed as a monolith, but the internal structure should be high
 | Entity | Key Fields |
 |---|---|
 | `User` | Id, Username, Email |
-| `PlayerCharacter` | Id, Name, Hp, AttackBonus, DamageBonus, ArmorClass, UserId |
+| `PlayerCharacter` | Id, Name, Description, Hp, AttackBonus, DamageBonus, ArmorClass |
 | `World` | Id, Name |
 | `EnemyTemplate` | Id, Name, BaseHp, AttackBonus, DamageBonus, ArmorClass, WorldId |
 | `Enemy` | Id, CurrentHp, Status (Alive/Staggered/Dead), TemplateId |

@@ -30,6 +30,25 @@ public class CharactersController(IDbContextFactory<RPGContext> dbFactory) : Con
         return Ok(new CharacterDto(character.Id, character.Name, character.Description));
     }
 
+    /// <summary>Updates name and description of an existing character.</summary>
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCharacterRequest request)
+    {
+        await using var context = await dbFactory.CreateDbContextAsync();
+        var character = await context.PlayerCharacters
+            .SingleOrDefaultAsync(c => c.Id == id);
+
+        if (character == null) 
+            return NotFound();
+        
+        character.Name = request.Name;
+        character.Description = request.Description;
+
+        await context.SaveChangesAsync();
+        
+        return Ok(new CharacterDto(character!.Id, character.Name, character.Description));
+    }
+
     /// <summary>Creates a new character.</summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCharacterRequest request)
@@ -50,3 +69,4 @@ public class CharactersController(IDbContextFactory<RPGContext> dbFactory) : Con
 
 public record CharacterDto(Guid Id, string Name, string Description);
 public record CreateCharacterRequest(string Name, string Description);
+public record UpdateCharacterRequest(string Name, string Description);

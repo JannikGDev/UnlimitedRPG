@@ -27,3 +27,10 @@ export function createCharacter(name: string, description: string): Promise<Char
 		body: JSON.stringify({ name, description })
 	});
 }
+
+export function updateCharacter(id: string, name: string, description: string): Promise<CharacterDto> {
+	return request(`/api/characters/${id}`, {
+		method: 'PUT',
+		body: JSON.stringify({ name, description })
+	});
+}
