@@ -11,6 +11,20 @@ export interface SessionDto {
 	status: string;
 }
 
+export interface ActiveSessionDto {
+	id: string;
+	characterId: string;
+	characterName: string;
+	startedAt: string;
+}
+
+export interface SessionMessageDto {
+	id: string;
+	mode: string;
+	text: string;
+	sentAt: string;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
 	const res = await fetch(path, {
 		headers: { 'Content-Type': 'application/json' },
@@ -46,5 +60,20 @@ export function createSession(characterId: string): Promise<SessionDto> {
 	return request('/api/sessions', {
 		method: 'POST',
 		body: JSON.stringify({ characterId })
+	});
+}
+
+export function getActiveSessions(): Promise<ActiveSessionDto[]> {
+	return request('/api/sessions');
+}
+
+export function getSessionMessages(sessionId: string): Promise<SessionMessageDto[]> {
+	return request(`/api/sessions/${sessionId}/messages`);
+}
+
+export function addSessionMessage(sessionId: string, mode: string, text: string): Promise<SessionMessageDto> {
+	return request(`/api/sessions/${sessionId}/messages`, {
+		method: 'POST',
+		body: JSON.stringify({ mode, text })
 	});
 }

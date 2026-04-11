@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { getCharacters, createCharacter } from '$lib/api';
-	import type { CharacterDto } from '$lib/api';
+	import { getCharacters, createCharacter, getActiveSessions } from '$lib/api';
+	import type { CharacterDto, ActiveSessionDto } from '$lib/api';
 
 	let characters = $state<CharacterDto[]>([]);
+	let sessions = $state<ActiveSessionDto[]>([]);
 	let name = $state('');
 	let description = $state('');
 	let error = $state('');
@@ -12,6 +13,9 @@
 		getCharacters()
 			.then((c) => (characters = c))
 			.catch(() => (error = 'Could not reach the server. Is the API running?'));
+		getActiveSessions()
+			.then((s) => (sessions = s))
+			.catch(() => {});
 	});
 
 	async function submit() {
@@ -33,6 +37,23 @@
 
 <main class="mx-auto max-w-2xl px-4 py-12 space-y-10">
 	<h1 class="text-3xl font-bold tracking-wide">UnlimitedRPG</h1>
+
+	<!-- Active sessions -->
+	{#if sessions.length > 0}
+		<section>
+			<h2 class="mb-4 text-lg font-semibold">Active Sessions</h2>
+			<ul class="space-y-2">
+				{#each sessions as session}
+					<li class="hover:bg-gray-600">
+						<a href="/session/{session.id}" class="block rounded border p-3">
+							<p class="font-medium">{session.characterName}</p>
+							<p class="text-sm text-gray-400">Started {new Date(session.startedAt).toLocaleString()}</p>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
 
 	<!-- Character list -->
 	<section>

@@ -40,4 +40,10 @@ The following personas are stand-ins for different roles of users:
 
 [Done][R7]RPGPlayer can type a message, select a mode, and send it — the message appears in the chat history with its mode indicated.
 
-[Open][R8]After the player sends a message, the game generates a text response and displays it in the chat.
+[Done][R8]When a player sends a message, it is saved to the database with its mode and timestamp.
+
+[Done][R9]When a player opens a session, the full message history is loaded from the database and shown in the chat.
+
+[Done][R10]Active sessions are listed on the home page so the player can resume them.
+
+[Open][R11]After the player sends a message, the game generates a text response and displays it in the chat.
