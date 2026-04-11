@@ -17,7 +17,7 @@ The webapp also allows people to create their own worlds for other players to pl
 # Definitions
 User = A human person using the webapp over the browser
 Character = A fictional person that can be played as
-World = A fictional setting
+World = A fictional setting, this a container for all information that is created BEFORE a session is started
 Session = A running instance of game of a player with a character in a world
 
 # Personas

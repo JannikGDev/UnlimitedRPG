@@ -4,6 +4,13 @@ export interface CharacterDto {
 	description: string;
 }
 
+export interface SessionDto {
+	id: string;
+	characterId: string;
+	startedAt: string;
+	status: string;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
 	const res = await fetch(path, {
 		headers: { 'Content-Type': 'application/json' },
@@ -32,5 +39,12 @@ export function updateCharacter(id: string, name: string, description: string): 
 	return request(`/api/characters/${id}`, {
 		method: 'PUT',
 		body: JSON.stringify({ name, description })
+	});
+}
+
+export function createSession(characterId: string): Promise<SessionDto> {
+	return request('/api/sessions', {
+		method: 'POST',
+		body: JSON.stringify({ characterId })
 	});
 }

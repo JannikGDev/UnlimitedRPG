@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { getCharacter, updateCharacter } from '$lib/api';
+	import { goto } from '$app/navigation';
+	import { getCharacter, updateCharacter, createSession } from '$lib/api';
 	import type { CharacterDto } from '$lib/api';
 	import type { PageData } from './$types';
 
@@ -11,6 +12,7 @@
 	let editName = $state('');
 	let editDescription = $state('');
 	let saving = $state(false);
+	let starting = $state(false);
 
 	$effect(() => {
 		getCharacter(data.id)
@@ -35,6 +37,18 @@
 			error = 'Failed to save changes.';
 		} finally {
 			saving = false;
+		}
+	}
+
+	async function startSession() {
+		starting = true;
+		error = '';
+		try {
+			const session = await createSession(data.id);
+			goto(`/session/${session.id}`);
+		} catch {
+			error = 'Failed to start session.';
+			starting = false;
 		}
 	}
 </script>
@@ -82,12 +96,24 @@
 		<div class="space-y-4">
 			<h1 class="text-3xl font-bold">{character.name}</h1>
 			<p class="text-gray-700">{character.description}</p>
-			<button
-				onclick={startEdit}
-				class="rounded border px-4 py-2 text-sm font-medium"
-			>
-				Edit
-			</button>
+			{#if error}
+				<p class="text-sm text-red-500">{error}</p>
+			{/if}
+			<div class="flex gap-2">
+				<button
+					onclick={startEdit}
+					class="rounded border px-4 py-2 text-sm font-medium"
+				>
+					Edit
+				</button>
+				<button
+					onclick={startSession}
+					disabled={starting}
+					class="rounded border px-4 py-2 text-sm font-medium disabled:opacity-40"
+				>
+					{starting ? 'Starting…' : 'Start Session'}
+				</button>
+			</div>
 		</div>
 	{/if}
 </main>

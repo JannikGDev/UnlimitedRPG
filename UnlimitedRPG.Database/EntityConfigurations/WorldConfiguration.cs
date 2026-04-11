@@ -11,10 +11,5 @@ public class WorldConfiguration : IEntityTypeConfiguration<World>
         builder.HasKey(w => w.Id);
 
         builder.Property(w => w.Name).IsRequired();
-
-        builder.HasMany(w => w.EnemyTemplates)
-            .WithOne(t => t.World)
-            .HasForeignKey(t => t.WorldId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }

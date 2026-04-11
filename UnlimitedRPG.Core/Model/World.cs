@@ -1,9 +1,7 @@
-﻿namespace UnlimitedRPG.Core.Model;
+namespace UnlimitedRPG.Core.Model;
 
 public class World
 {
-    public Guid   Id      { get; init; } = Guid.NewGuid();
-    public string Name    { get; init; } = string.Empty;
-
-    public ICollection<EnemyTemplate> EnemyTemplates { get; init; } = [];
+    public Guid   Id   { get; init; } = Guid.NewGuid();
+    public string Name { get; init; } = string.Empty;
 }
