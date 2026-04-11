@@ -6,5 +6,4 @@ public class User
     public string Username { get; init; } = string.Empty;
     public string Email    { get; init; } = string.Empty;
 
-    public ICollection<PlayerCharacter> Characters { get; init; } = [];
 }

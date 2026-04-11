@@ -1,102 +1,82 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { getWorlds, createSession } from '$lib/api';
-	import type { WorldDto } from '$lib/api';
+	import { getCharacters, createCharacter } from '$lib/api';
+	import type { CharacterDto } from '$lib/api';
 
-	let worlds = $state<WorldDto[]>([]);
-	let selected = $state<WorldDto | null>(null);
-	let playerName = $state('');
-	let loading = $state(true);
-	let starting = $state(false);
+	let characters = $state<CharacterDto[]>([]);
+	let name = $state('');
+	let description = $state('');
 	let error = $state('');
+	let submitting = $state(false);
 
 	$effect(() => {
-		getWorlds()
-			.then((w) => (worlds = w))
-			.catch(() => (error = 'Could not reach the server. Is the API running?'))
-			.finally(() => (loading = false));
+		getCharacters()
+			.then((c) => (characters = c))
+			.catch(() => (error = 'Could not reach the server. Is the API running?'));
 	});
 
-	async function beginAdventure() {
-		if (!selected || !playerName.trim()) return;
-		starting = true;
+	async function submit() {
+		if (!name.trim() || !description.trim()) return;
+		submitting = true;
 		error = '';
 		try {
-			const session = await createSession(selected.id, playerName.trim());
-			goto(`/session/${session.sessionId}`);
+			const created = await createCharacter(name.trim(), description.trim());
+			characters = [...characters, created];
+			name = '';
+			description = '';
 		} catch {
-			error = 'Failed to start session.';
-			starting = false;
+			error = 'Failed to create character.';
+		} finally {
+			submitting = false;
 		}
 	}
 </script>
 
-<main class="flex min-h-screen flex-col items-center justify-center px-4 py-16">
-	<!-- Title -->
-	<div class="mb-12 text-center">
-		<h1 class="mb-2 text-5xl font-bold tracking-widest text-amber-400 uppercase">
-			⚔ UnlimitedRPG
-		</h1>
-		<p class="text-sm tracking-wider text-zinc-400 uppercase">A modular roleplaying framework</p>
-	</div>
+<main class="mx-auto max-w-2xl px-4 py-12 space-y-10">
+	<h1 class="text-3xl font-bold tracking-wide">UnlimitedRPG</h1>
 
-	<div class="w-full max-w-lg space-y-8">
-		<!-- World selection -->
-		<section>
-			<h2 class="mb-3 text-xs font-semibold tracking-widest text-zinc-400 uppercase">
-				Choose a world
-			</h2>
+	<!-- Character list -->
+	<section>
+		<h2 class="mb-4 text-lg font-semibold">Characters</h2>
+		{#if characters.length === 0}
+			<p class="text-sm text-gray-500">No characters yet.</p>
+		{:else}
+			<ul class="space-y-2">
+				{#each characters as character}
+					<li class="rounded border p-3">
+						<p class="font-medium">{character.name}</p>
+						<p class="text-sm text-gray-600">{character.description}</p>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</section>
 
-			{#if loading}
-				<p class="text-sm text-zinc-500">Loading worlds…</p>
-			{:else if worlds.length === 0 && !error}
-				<p class="text-sm text-zinc-500">No worlds found.</p>
-			{:else}
-				<div class="grid grid-cols-2 gap-3">
-					{#each worlds as world}
-						<button
-							onclick={() => (selected = world)}
-							class="rounded border px-4 py-3 text-left text-sm font-medium transition-colors
-								{selected?.id === world.id
-								? 'border-amber-500 bg-amber-500/10 text-amber-300'
-								: 'border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800'}"
-						>
-							{world.name}
-						</button>
-					{/each}
-				</div>
-			{/if}
-		</section>
-
-		<!-- Player name -->
-		<section>
-			<h2 class="mb-3 text-xs font-semibold tracking-widest text-zinc-400 uppercase">
-				Your name
-			</h2>
+	<!-- Creation form -->
+	<section>
+		<h2 class="mb-4 text-lg font-semibold">Create character</h2>
+		<form onsubmit={(e) => { e.preventDefault(); submit(); }} class="space-y-3">
 			<input
 				type="text"
-				placeholder="Enter character name…"
-				bind:value={playerName}
-				class="w-full rounded border border-zinc-700 bg-zinc-900 px-4 py-2 text-zinc-100
-					placeholder-zinc-600 outline-none transition-colors
-					focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
+				placeholder="Name"
+				bind:value={name}
+				class="w-full rounded border px-3 py-2 text-sm"
 			/>
-		</section>
-
-		<!-- Error -->
-		{#if error}
-			<p class="text-sm text-red-400">{error}</p>
-		{/if}
-
-		<!-- CTA -->
-		<button
-			onclick={beginAdventure}
-			disabled={!selected || !playerName.trim() || starting}
-			class="w-full rounded border border-amber-600 bg-amber-600/10 py-3 text-sm font-bold
-				tracking-widest text-amber-400 uppercase transition-colors
-				hover:bg-amber-600/20 disabled:cursor-not-allowed disabled:opacity-30"
-		>
-			{starting ? 'Starting…' : 'Begin Adventure'}
-		</button>
-	</div>
+			<textarea
+				placeholder="Description"
+				bind:value={description}
+				rows="3"
+				class="w-full rounded border px-3 py-2 text-sm"
+			></textarea>
+			{#if error}
+				<p class="text-sm text-red-500">{error}</p>
+			{/if}
+			<button
+				type="submit"
+				disabled={!name.trim() || !description.trim() || submitting}
+				class="rounded border px-4 py-2 text-sm font-medium disabled:opacity-40"
+			>
+				{submitting ? 'Saving…' : 'Save character'}
+			</button>
+		</form>
+	</section>
 </main>

@@ -12,10 +12,5 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.Username).IsRequired();
         builder.Property(u => u.Email).IsRequired();
-
-        builder.HasMany(u => u.Characters)
-            .WithOne(c => c.User)
-            .HasForeignKey(c => c.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }
