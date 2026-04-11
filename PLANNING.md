@@ -34,9 +34,9 @@ The following personas are stand-ins for different roles of users:
 
 [Done][R4]RPGPlayer can can edit the characters after saving them.
 
-[Open][R5]RPGPlayer can start a session with one of their characters and is taken to the session page.
+[Done][R5]RPGPlayer can start a session with one of their characters and is taken to the session page.
 
-[Open][R6]The session page shows a chat-style message history and an input area with a mode selector ("Say something" / "Do something").
+[Done][R6]The session page shows a chat-style message history and an input area with a mode selector ("Say something" / "Do something").
 
 [Open][R7]RPGPlayer can type a message, select a mode, and send it — the message appears in the chat history with its mode indicated.
 
