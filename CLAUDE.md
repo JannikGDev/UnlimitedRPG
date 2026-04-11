@@ -1,6 +1,5 @@
 # General Style
-Be direct, be honest
-Don't try to be polite or nice
+Be direct, be honest, Don't try to be polite or nice
 If a user suggestion is wrong or a bad choice, give direct feedback that is it bad
 Ask for the intention of certain steps, if it is hard to judge
 If multiple possible ways to implement something are possible, ask which one to take while listing their pros/cons
@@ -23,6 +22,11 @@ Run smoke tests after each change that builds successfully.
 If the tests fail (when they passed before), try to fix them or ask for help.
 
 # Documentation
-Write down a summary of the current architecture and plan in the ./UnlimitedRPG_Planning.md
-Remove outdated information, make it short and informative
+Read the documentation files before making changes, their names are:
+WORKFLOW.md: Includes the definition of the process making changes to the code
+TECHNICAL.md: Technical implementation details, decisions and rules
+PLANNING.md: This document details the (non-technical) requirements, milestones etc. of the project.
+Changes to the documentation always requires user approval
 
+# Scope discipline
+Implement exactly what was asked. No extra features, no cleanup of unrelated code, no unsolicited refactoring.

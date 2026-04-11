@@ -15,7 +15,9 @@
       "Bash(taskkill //F //IM node.exe)",
       "Bash(xargs cat:*)",
       "Bash(find C:WorkspaceProgrammingUnlimitedRPGUnlimitedRPG.Tests -maxdepth 1 -type f -name *.cs)",
-      "Bash(dotnet test:*)"
+      "Bash(dotnet test:*)",
+      "Bash(ls /c/Workspace/Programming/UnlimitedRPG/*.md)",
+      "Bash(grep \"\\\\.cs$\")"
     ]
   }
 }
