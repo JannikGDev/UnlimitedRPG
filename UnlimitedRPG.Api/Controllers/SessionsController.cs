@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using UnlimitedRPG.Core.Interfaces;
 using UnlimitedRPG.Core.Model;
 using UnlimitedRPG.Database;
 
@@ -7,8 +8,13 @@ namespace UnlimitedRPG.Api.Controllers;
 
 [ApiController]
 [Route("api/sessions")]
-public class SessionsController(IDbContextFactory<RPGContext> dbFactory) : ControllerBase
+public class SessionsController(IDbContextFactory<RPGContext> dbFactory, ITextGenerator textGenerator) : ControllerBase
 {
+    private const string SystemPrompt =
+        "You are the narrator of a pen-and-paper RPG adventure. " +
+        "The player will say or do things. Respond with a short, vivid narration of what happens next. " +
+        "Keep responses to 2-3 sentences.";
+
     /// <summary>Creates a new session for the given character.</summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateSessionRequest request)
@@ -50,26 +56,42 @@ public class SessionsController(IDbContextFactory<RPGContext> dbFactory) : Contr
         return Ok(sessions);
     }
 
-    /// <summary>Appends a message to the session.</summary>
+    /// <summary>Appends a player message and returns the player message + game response.</summary>
     [HttpPost("{id:guid}/messages")]
-    public async Task<IActionResult> AddMessage(Guid id, [FromBody] AddMessageRequest request)
+    public async Task<IActionResult> AddMessage(Guid id, [FromBody] AddMessageRequest request, CancellationToken ct)
     {
         await using var db = await dbFactory.CreateDbContextAsync();
 
-        var session = await db.Sessions.FindAsync(id);
+        var session = await db.Sessions.FindAsync([id], ct);
         if (session is null) return NotFound();
 
-        var message = new SessionMessage
+        var playerMessage = new SessionMessage
         {
             SessionId = id,
+            Role      = "player",
             Mode      = request.Mode,
             Text      = request.Text
         };
+        db.SessionMessages.Add(playerMessage);
+        await db.SaveChangesAsync(ct);
 
-        db.SessionMessages.Add(message);
-        await db.SaveChangesAsync();
+        var inputPrompt = $"[{request.Mode.ToUpperInvariant()}] {request.Text}";
+        var narration = await textGenerator.GenerateAsync(SystemPrompt, inputPrompt, ct);
 
-        return Ok(new SessionMessageDto(message.Id, message.Mode, message.Text, message.SentAt));
+        var gameMessage = new SessionMessage
+        {
+            SessionId = id,
+            Role      = "game",
+            Mode      = string.Empty,
+            Text      = narration
+        };
+        db.SessionMessages.Add(gameMessage);
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new AddMessageResponse(
+            new SessionMessageDto(playerMessage.Id, playerMessage.Role, playerMessage.Mode, playerMessage.Text, playerMessage.SentAt),
+            new SessionMessageDto(gameMessage.Id, gameMessage.Role, gameMessage.Mode, gameMessage.Text, gameMessage.SentAt)
+        ));
     }
 
     /// <summary>Returns all messages for a session ordered by time.</summary>
@@ -84,7 +106,7 @@ public class SessionsController(IDbContextFactory<RPGContext> dbFactory) : Contr
         var messages = await db.SessionMessages
             .Where(m => m.SessionId == id)
             .OrderBy(m => m.SentAt)
-            .Select(m => new SessionMessageDto(m.Id, m.Mode, m.Text, m.SentAt))
+            .Select(m => new SessionMessageDto(m.Id, m.Role, m.Mode, m.Text, m.SentAt))
             .ToListAsync();
 
         return Ok(messages);
@@ -93,6 +115,7 @@ public class SessionsController(IDbContextFactory<RPGContext> dbFactory) : Contr
 
 public record CreateSessionRequest(Guid CharacterId);
 public record AddMessageRequest(string Mode, string Text);
+public record AddMessageResponse(SessionMessageDto PlayerMessage, SessionMessageDto GameMessage);
 public record SessionDto(Guid Id, Guid CharacterId, DateTime StartedAt, SessionStatus Status);
 public record ActiveSessionDto(Guid Id, Guid CharacterId, string CharacterName, DateTime StartedAt);
-public record SessionMessageDto(Guid Id, string Mode, string Text, DateTime SentAt);
+public record SessionMessageDto(Guid Id, string Role, string Mode, string Text, DateTime SentAt);

@@ -20,9 +20,15 @@ export interface ActiveSessionDto {
 
 export interface SessionMessageDto {
 	id: string;
+	role: string;
 	mode: string;
 	text: string;
 	sentAt: string;
+}
+
+export interface AddMessageResponse {
+	playerMessage: SessionMessageDto;
+	gameMessage: SessionMessageDto;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -71,7 +77,7 @@ export function getSessionMessages(sessionId: string): Promise<SessionMessageDto
 	return request(`/api/sessions/${sessionId}/messages`);
 }
 
-export function addSessionMessage(sessionId: string, mode: string, text: string): Promise<SessionMessageDto> {
+export function addSessionMessage(sessionId: string, mode: string, text: string): Promise<AddMessageResponse> {
 	return request(`/api/sessions/${sessionId}/messages`, {
 		method: 'POST',
 		body: JSON.stringify({ mode, text })

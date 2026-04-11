@@ -19,7 +19,8 @@
       "Bash(ls /c/Workspace/Programming/UnlimitedRPG/*.md)",
       "Bash(grep \"\\\\.cs$\")",
       "Bash(taskkill /PID 21012 /F)",
-      "Bash(cmd /c \"taskkill /PID 21012 /F\")"
+      "Bash(cmd /c \"taskkill /PID 21012 /F\")",
+      "Bash(dotnet sln:*)"
     ]
   }
 }

@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using UnlimitedRPG.Api.Hubs;
+using UnlimitedRPG.Core.Interfaces;
 using UnlimitedRPG.Database;
+using UnlimitedRPG.Stubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContextFactory<RPGContext>(
     options => options.UseInMemoryDatabase("RPGDatabase"));
+
+builder.Services.AddSingleton<ITextGenerator, StubTextGenerator>();
 
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();

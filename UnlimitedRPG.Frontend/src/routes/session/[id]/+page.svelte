@@ -6,7 +6,8 @@
 
 	interface Message {
 		id: string;
-		mode: Mode;
+		role: 'player' | 'game';
+		mode: Mode | '';
 		text: string;
 	}
 
@@ -21,7 +22,12 @@
 	$effect(() => {
 		getSessionMessages(data.id)
 			.then((msgs) => {
-				messages = msgs.map((m) => ({ id: m.id, mode: m.mode as Mode, text: m.text }));
+				messages = msgs.map((m) => ({
+					id: m.id,
+					role: m.role as 'player' | 'game',
+					mode: m.mode as Mode | '',
+					text: m.text
+				}));
 			})
 			.catch(() => (error = 'Could not load session history.'));
 	});
@@ -32,8 +38,19 @@
 		sending = true;
 		error = '';
 		try {
-			const saved = await addSessionMessage(data.id, mode, text);
-			messages.push({ id: saved.id, mode: saved.mode as Mode, text: saved.text });
+			const res = await addSessionMessage(data.id, mode, text);
+			messages.push({
+				id: res.playerMessage.id,
+				role: 'player',
+				mode: res.playerMessage.mode as Mode,
+				text: res.playerMessage.text
+			});
+			messages.push({
+				id: res.gameMessage.id,
+				role: 'game',
+				mode: '',
+				text: res.gameMessage.text
+			});
 			input = '';
 		} catch {
 			error = 'Failed to send message.';
@@ -56,10 +73,17 @@
 			<p class="text-sm text-gray-400 text-center mt-8">Your adventure begins. Say or do something.</p>
 		{/if}
 		{#each messages as msg (msg.id)}
-			<div class="flex flex-col gap-0.5">
-				<span class="text-xs text-gray-400">{msg.mode === 'say' ? 'Say' : 'Do'}</span>
-				<p class="text-sm text-gray-900 bg-gray-100 rounded px-3 py-2 self-end max-w-prose">{msg.text}</p>
-			</div>
+			{#if msg.role === 'player'}
+				<div class="flex flex-col items-end gap-0.5">
+					<span class="text-xs text-gray-400">{msg.mode === 'say' ? 'Say' : 'Do'}</span>
+					<p class="text-sm text-gray-900 bg-gray-100 rounded px-3 py-2 max-w-prose">{msg.text}</p>
+				</div>
+			{:else}
+				<div class="flex flex-col items-start gap-0.5">
+					<span class="text-xs text-gray-400">Narrator</span>
+					<p class="text-sm text-gray-900 bg-blue-50 rounded px-3 py-2 max-w-prose">{msg.text}</p>
+				</div>
+			{/if}
 		{/each}
 		{#if error}
 			<p class="text-sm text-red-500 text-center">{error}</p>

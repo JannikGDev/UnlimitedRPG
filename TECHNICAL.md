@@ -33,13 +33,15 @@ The backend is deployed as a monolith, but the internal structure should be high
 - **Database**: Handles all persistency (EF Core DbContext and entity configurations).
 - **Api**: Startup project. Holds controllers, DI wiring, SignalR hubs.
 - **Stubs**: Stub implementations of all Core interfaces. Allows testing without a real LLM or database.
+- **TextGenerator**: Production implementation of `ITextGenerator` using a local LmStudio HTTP API.
 - **Tests**: xUnit test project.
 
 **Dependency rules:**
 - `Core` → no references
 - `Database` → `Core`
 - `Stubs` → `Core`
-- `Api` → `Core`, `Database`, `Stubs`
+- `TextGenerator` → `Core`
+- `Api` → `Core`, `Database`, `Stubs`, `TextGenerator`
 - `Tests` → `Core`, `Stubs`
 
 # EF Core Rules

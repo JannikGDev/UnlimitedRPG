@@ -10,6 +10,7 @@ public class SessionMessageConfiguration : IEntityTypeConfiguration<SessionMessa
     {
         builder.HasKey(m => m.Id);
 
+        builder.Property(m => m.Role).IsRequired();
         builder.Property(m => m.Mode).IsRequired();
         builder.Property(m => m.Text).IsRequired();
         builder.Property(m => m.SentAt).IsRequired();
