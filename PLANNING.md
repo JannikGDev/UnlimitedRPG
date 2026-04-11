@@ -32,6 +32,6 @@ The following personas are stand-ins for different roles of users:
 
 [Done][R3]RPGPlayer can see all created characters in a list and open them to see the details
 
-[Open][R4]RPGPlayer can can edit the characters after saving them.
+[Done][R4]RPGPlayer can can edit the characters after saving them.
 
 [Open][R5]RPGPlayer can start a session with one of his characters. 
